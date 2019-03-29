@@ -48,12 +48,15 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.context.support.ReloadableResourceBundleMessageSource;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.ConnectionProxy;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.jdbc.support.nativejdbc.NativeJdbcExtractor;
 
 import open.commons.Result;
+import open.commons.annotation.ColumnDef;
 import open.commons.database.ConnectionCallbackBroker;
 import open.commons.database.ConnectionCallbackBroker2;
 import open.commons.database.DefaultConCallbackBroker2;
@@ -65,7 +68,9 @@ import open.commons.utils.AssertUtils;
 import open.commons.utils.SQLUtils;
 
 /**
- * DAO 공통 기능 제공 클래스.
+ * DAO 공통 기능 제공 클래스.<br>
+ * 
+ * Springframework {@link JdbcTemplate}에서 사용하는 저레벨 수준의 코드를 이용하여 customize 하였음.
  * 
  * @since 2019. 3. 28.
  * @version 0.1.0
@@ -107,6 +112,7 @@ public abstract class AbstractGenericDao implements IGenericDao {
     }
 
     private <T> List<T> createObject(ResultSet rs, Class<T> entity, String... columns) throws SQLException {
+
         SQLBiFunction<ResultSet, Integer, T> creator = findCreator(entity, columns);
 
         List<T> l = new ArrayList<>();
@@ -125,8 +131,7 @@ public abstract class AbstractGenericDao implements IGenericDao {
     }
 
     /**
-     * 
-     * <br>
+     * 쿼리 요청을 처리하고 결과를 제공한다. <br>
      * 
      * <pre>
      * [개정이력]
@@ -136,21 +141,20 @@ public abstract class AbstractGenericDao implements IGenericDao {
      * </pre>
      *
      * @param act
-     * @return
+     *            {@link Connection}을 전달받아 요청쿼리를 처리하는 객체
+     * @return 쿼리처리 결과.
      *
      * @since 2019. 3. 28.
-     * @version _._._
+     * @version 0.1.0
      * @author Park_Jun_Hong_(fafanmama_at_naver_com)
      */
-    private <T> T execute(SQLFunction<Connection, T> act) {
+    private <T> T execute(SQLFunction<Connection, T> act) throws SQLException {
 
         Connection con = DataSourceUtils.getConnection(getDataSource());
         Connection conToWork = null;
 
         JdbcTemplate jdbcTemplate = getJdbcTemplate();
         NativeJdbcExtractor nativeJdbcExtractor = jdbcTemplate.getNativeJdbcExtractor();
-
-        DefaultConnectionCallback action = null;
 
         try {
             con.setAutoCommit(false);
@@ -175,8 +179,14 @@ public abstract class AbstractGenericDao implements IGenericDao {
             } catch (SQLException ignored) {
             }
 
-            DataAccessException dae = jdbcTemplate.getExceptionTranslator().translate("ConnectionCallback", (action != null ? action.getBroker().getQuery() : null), e);
-            throw new IllegalArgumentException(dae.getMessage(), dae);
+            StringBuffer msg = new StringBuffer();
+            msg.append("con=");
+            msg.append(con.toString());
+            msg.append("con-to-work=");
+            msg.append(conToWork != null ? conToWork.toString() : null);
+
+            DataAccessException dae = jdbcTemplate.getExceptionTranslator().translate("ConnectionCallback", msg.toString(), e);
+            throw new SQLException(dae.getMessage(), dae);
         } finally {
             try {
                 if (con != null) {
@@ -193,8 +203,7 @@ public abstract class AbstractGenericDao implements IGenericDao {
     }
 
     /**
-     * 
-     * <br>
+     * 요청쿼리를 실행하고 결과를 제공한다. <br>
      * 
      * <pre>
      * [개정이력]
@@ -204,82 +213,75 @@ public abstract class AbstractGenericDao implements IGenericDao {
      * </pre>
      *
      * @param broker
-     * @param creator
-     * @return
+     *            요청쿼리와 쿼리 파라미터를 처리하는 객체
+     * @param entity
+     *            요청쿼리 처리 결과 데이타 모델
+     * @param columns
+     *            요청쿼리 처리 결과에서 필요한 컬럼이름.
+     *            <li><b><code>entity</code></b> 모델의 메소드에 적용된 {@link ColumnDef#name()} 값들.
+     * @return 쿼리 처리결과.
+     *         <ul>
+     *         <li>&lt;T&gt; 요청받을 데이타 타입
+     *         </ul>
      *
+     * @throws SQLException
+     * 
      * @since 2019. 3. 28.
-     * @version _._._
+     * @version 0.1.0
      * @author Park_Jun_Hong_(fafanmama_at_naver_com)
+     * @see {@link ColumnDef}
      */
-    public final <T> Result<List<T>> executeQuery(ConnectionCallbackBroker broker, Class<T> entity, String... columns) {
+    private <T> List<T> executeQuery(ConnectionCallbackBroker broker, Class<T> entity, String... columns) throws SQLException {
+        return execute(con -> {
+            PreparedStatement pstmt = con.prepareStatement(broker.getQuery());
 
-        Result<List<T>> result = new Result<>();
+            IConnectionCallbackSetter setter = broker.getSetter();
+            if (setter != null) {
+                setter.set(pstmt);
+            }
 
-        try {
-            List<T> list = execute(con -> {
-                PreparedStatement pstmt = con.prepareStatement(broker.getQuery());
+            ResultSet rs = pstmt.executeQuery();
 
-                IConnectionCallbackSetter setter = broker.getSetter();
-                if (setter != null) {
-                    setter.set(pstmt);
-                }
-
-                ResultSet rs = pstmt.executeQuery();
-
-                return createObject(rs, entity, columns);
-            });
-
-            result.andTrue().setData(list);
-        } catch (Exception e) {
-            logger.warn(e.getMessage(), e);
-            result.setMessage(e.getMessage());
-        }
-
-        return result;
+            return createObject(rs, entity, columns);
+        });
     }
 
     /**
-     * 
-     * <br>
+     * 요청쿼리를 실행하고 결과를 제공한다. <br>
      * 
      * <pre>
      * [개정이력]
-     *      날짜    	| 작성자	|	내용
+     *      날짜      | 작성자   |   내용
      * ------------------------------------------
-     * 2019. 3. 28.		박준홍			최초 작성
+     * 2019. 3. 28.     박준홍         최초 작성
      * </pre>
      *
      * @param broker
+     *            요청쿼리와 쿼리 파라미터를 처리하는 객체
      * @param entity
+     *            요청쿼리 처리 결과 데이타 모델
      * @param columns
-     * @return
+     *            요청쿼리 처리 결과에서 필요한 컬럼이름.
+     *            <li><b><code>entity</code></b> 모델의 메소드에 적용된 {@link ColumnDef#name()} 값들.
+     * @return 쿼리 처리결과.
+     *         <ul>
+     *         <li>&lt;T&gt; 요청받을 데이타 타입
+     *         </ul>
      * @throws SQLException
      *
      * @since 2019. 3. 28.
-     * @version _._._
+     * @version 0.1.0
      * @author Park_Jun_Hong_(fafanmama_at_naver_com)
      */
-    public final <S, T> Result<List<T>> executeQuery(ConnectionCallbackBroker2<S> broker, Class<T> entity, String... columns) {
+    private <S, T> List<T> executeQuery(ConnectionCallbackBroker2<S> broker, Class<T> entity, String... columns) throws SQLException {
+        return execute(con -> {
+            PreparedStatement pstmt = con.prepareStatement(broker.getQuery());
+            broker.set(pstmt);
 
-        Result<List<T>> result = new Result<>();
+            ResultSet rs = pstmt.executeQuery();
 
-        try {
-            List<T> list = execute(con -> {
-                PreparedStatement pstmt = con.prepareStatement(broker.getQuery());
-                broker.set(pstmt);
-
-                ResultSet rs = pstmt.executeQuery();
-
-                return createObject(rs, entity, columns);
-            });
-
-            result.andTrue().setData(list);
-        } catch (Exception e) {
-            logger.warn(e.getMessage(), e);
-            result.setMessage(e.getMessage());
-        }
-
-        return result;
+            return createObject(rs, entity, columns);
+        });
     }
 
     /**
@@ -293,8 +295,8 @@ public abstract class AbstractGenericDao implements IGenericDao {
      * </pre>
      *
      * @param brokers
-     *            쿼리 실행 객체
-     * @return
+     *            요청쿼리 처리 객체
+     * @return 쿼리 처리결과.
      *
      * @since 2019. 3. 28.
      * @version 0.1.0
@@ -315,10 +317,14 @@ public abstract class AbstractGenericDao implements IGenericDao {
      * </pre>
      *
      * @param brokers
-     * @return
+     *            요청쿼리 처리 객체
+     * @return 쿼리 처리결과
+     *         <ul>
+     *         <li>&lt;T&gt; 요청받을 데이타 타입
+     *         </ul>
      *
      * @since 2019. 3. 28.
-     * @version _._._
+     * @version 0.1.0
      * @author Park_Jun_Hong_(fafanmama_at_naver_com)
      */
     @SuppressWarnings("unchecked")
@@ -359,8 +365,8 @@ public abstract class AbstractGenericDao implements IGenericDao {
      * </pre>
      *
      * @param brokers
-     *            쿼리 실행 객체
-     * @return
+     *            요청쿼리 처리 객체
+     * @return 쿼리 처리결과
      *
      * @since 2019. 3. 28.
      * @version 0.1.0
@@ -392,7 +398,7 @@ public abstract class AbstractGenericDao implements IGenericDao {
     }
 
     /**
-     * 단일 쿼리 요청을 수행한다. <br>
+     * 단일 요청쿼리를 처리한다.<br>
      * 
      * <pre>
      * [개정이력]
@@ -401,9 +407,11 @@ public abstract class AbstractGenericDao implements IGenericDao {
      * 2019. 3. 28.		박준홍			최초 작성
      * </pre>
      *
-     * @param queryy
+     * @param query
+     *            요청쿼리
      * @param setter
-     * @return
+     *            요청쿼리 파라미터 설정 객체
+     * @return 쿼리 처리결과
      *
      * @since 2019. 3. 28.
      * @version 0.1.0
@@ -413,8 +421,58 @@ public abstract class AbstractGenericDao implements IGenericDao {
         return executeUpdate(new ConnectionCallbackBroker(query, setter));
     }
 
+    /**
+     * 단일 요청쿼리를 처리한다. <br>
+     * 
+     * <pre>
+     * [개정이력]
+     *      날짜    	| 작성자	|	내용
+     * ------------------------------------------
+     * 2019. 3. 29.		박준홍			최초 작성
+     * </pre>
+     *
+     * @param query
+     *            요청쿼리
+     * @param setter
+     *            요청쿼리 파라미터 설정 객체
+     * @return 쿼리 처리결과
+     *
+     * @since 2019. 3. 29.
+     * @version _._._
+     * @author Park_Jun_Hong_(fafanmama_at_naver_com)
+     */
+    @SuppressWarnings("unchecked")
+    public Result<Integer> executeUpdate(String query, SQLConsumer<PreparedStatement> setter) {
+        return executeUpdate(new DefaultConCallbackBroker2(query, setter));
+    }
+
+    /**
+     * 데이타 타입에 맞는 객체 생성자를 제공한다. <br>
+     * 
+     * <pre>
+     * [개정이력]
+     *      날짜    	| 작성자	|	내용
+     * ------------------------------------------
+     * 2019. 3. 28.		박준홍			최초 작성
+     * </pre>
+     *
+     * @param entity
+     *            쿼리처리 결과 데이타 타입
+     * @param columns
+     *            요청쿼리 처리 결과에서 필요한 컬럼이름.
+     *            <li><b><code>entity</code></b> 모델의 메소드에 적용된 {@link ColumnDef#name()} 값들.
+     * @return 쿼리 처리결과
+     *         <ul>
+     *         <li>&lt;T&gt; 요청받을 데이타 타입
+     *         </ul>
+     *
+     * @since 2019. 3. 28.
+     * @version _._._
+     * @author Park_Jun_Hong_(fafanmama_at_naver_com)
+     */
     @SuppressWarnings("unchecked")
     private <T> SQLBiFunction<ResultSet, Integer, T> findCreator(Class<T> entity, String... columns) {
+
         SQLBiFunction<ResultSet, Integer, T> creator = (SQLBiFunction<ResultSet, Integer, T>) CREATORS.get(entity.getName());
 
         if (creator == null) {
@@ -460,8 +518,7 @@ public abstract class AbstractGenericDao implements IGenericDao {
     }
 
     /**
-     * 
-     * <br>
+     * 데이터 조회 요청쿼리를 처리한다. <br>
      * 
      * <pre>
      * [개정이력]
@@ -471,21 +528,27 @@ public abstract class AbstractGenericDao implements IGenericDao {
      * </pre>
      *
      * @param query
+     *            데이터 조회 요청쿼리
      * @param entity
-     * @param columns
-     * @return
+     *            결과 데이타 타입
+     * @columns 요청쿼리 처리 결과에서 필요한 컬럼이름.
+     *          <li><b><code>entity</code></b> 모델의 메소드에 적용된 {@link ColumnDef#name()} 값들.
+     * 
+     * @return 쿼리 처리결과
+     *         <ul>
+     *         <li>&lt;T&gt; 요청받을 데이타 타입
+     *         </ul>
      *
      * @since 2019. 3. 28.
-     * @version _._._
+     * @version 0.1.0
      * @author Park_Jun_Hong_(fafanmama_at_naver_com)
      */
     public <T> Result<List<T>> getList(String query, Class<T> entity, String... columns) {
-        return executeQuery(new DefaultConCallbackBroker2(query, null), entity, columns);
+        return getList(query, (IConnectionCallbackSetter) null, entity, columns);
     }
 
     /**
-     * 
-     * <br>
+     * 데이터 조회 요청쿼리를 처리한다. <br>
      * 
      * <pre>
      * [개정이력]
@@ -495,17 +558,230 @@ public abstract class AbstractGenericDao implements IGenericDao {
      * </pre>
      *
      * @param query
+     *            데이터 조회 요청쿼리
      * @param setter
+     *            요청쿼리 파라미터 설정 객체
      * @param entity
-     * @param columns
-     * @return
+     *            결과 데이타 타입
+     * @columns 요청쿼리 처리 결과에서 필요한 컬럼이름.
+     *          <li><b><code>entity</code></b> 모델의 메소드에 적용된 {@link ColumnDef#name()} 값들.
+     * 
+     * @return 쿼리 처리결과
+     *         <ul>
+     *         <li>&lt;T&gt; 요청받을 데이타 타입
+     *         </ul>
+     * 
      *
      * @since 2019. 3. 28.
-     * @version _._._
+     * @version 0.1.0
+     * @author Park_Jun_Hong_(fafanmama_at_naver_com)
+     */
+    public <T> Result<List<T>> getList(String query, IConnectionCallbackSetter setter, Class<T> entity, String... columns) {
+
+        Result<List<T>> result = new Result<>();
+
+        try {
+            List<T> list = executeQuery(new ConnectionCallbackBroker(query, setter), entity, columns);
+            result.andTrue().setData(list);
+        } catch (SQLException e) {
+            result.setMessage(e.getMessage());
+        }
+
+        return result;
+    }
+
+    /**
+     * 데이터 조회 요청쿼리를 처리한다. <br>
+     * 
+     * <pre>
+     * [개정이력]
+     *      날짜    	| 작성자	|	내용
+     * ------------------------------------------
+     * 2019. 3. 28.		박준홍			최초 작성
+     * </pre>
+     *
+     * @param query
+     *            데이터 조회 요청쿼리
+     * @param setter
+     *            요청쿼리 파라미터 설정 객체
+     * @param entity
+     *            결과 데이타 타입
+     * @columns 요청쿼리 처리 결과에서 필요한 컬럼이름.
+     *          <li><b><code>entity</code></b> 모델의 메소드에 적용된 {@link ColumnDef#name()} 값들.
+     * 
+     * @return 쿼리 처리결과
+     *         <ul>
+     *         <li>&lt;T&gt; 요청받을 데이타 타입
+     *         </ul>
+     *
+     * @since 2019. 3. 28.
+     * @version 0.1.0
      * @author Park_Jun_Hong_(fafanmama_at_naver_com)
      */
     public <T> Result<List<T>> getList(String query, SQLConsumer<PreparedStatement> setter, Class<T> entity, String... columns) {
-        return executeQuery(new DefaultConCallbackBroker2(query, setter), entity, columns);
+
+        Result<List<T>> result = new Result<>();
+
+        try {
+            List<T> list = executeQuery(new DefaultConCallbackBroker2(query, setter), entity, columns);
+            result.andTrue().setData(list);
+        } catch (SQLException e) {
+            result.setMessage(e.getMessage());
+        }
+
+        return result;
+    }
+
+    /**
+     * 데이터 1개 요청쿼리를 처리한다. <br>
+     * 
+     * <pre>
+     * [개정이력]
+     *      날짜    	| 작성자	|	내용
+     * ------------------------------------------
+     * 2019. 3. 28.		박준홍			최초 작성
+     * </pre>
+     *
+     * @param query
+     *            조회 요청쿼리
+     * @param entity
+     *            결과 데이타 타입
+     * @param required
+     *            필수여부
+     * @param columns
+     *            요청쿼리 처리 결과에서 필요한 컬럼이름.
+     *            <li><b><code>entity</code></b> 모델의 메소드에 적용된 {@link ColumnDef#name()} 값들.
+     * @return 쿼리 처리결과
+     *         <ul>
+     *         <li>&lt;T&gt; 요청받을 데이타 타입
+     *         </ul>
+     *
+     * @since 2019. 3. 28.
+     * @version 0.1.0
+     * @author Park_Jun_Hong_(fafanmama_at_naver_com)
+     */
+    public <T> Result<T> getObject(String query, Class<T> entity, boolean required, String... columns) {
+        return getObject(query, null, entity, required, columns);
+    }
+
+    /**
+     * 데이터 1개 요청쿼리를 처리한다. <br>
+     * 
+     * <pre>
+     * [개정이력]
+     *      날짜    	| 작성자	|	내용
+     * ------------------------------------------
+     * 2019. 3. 28.		박준홍			최초 작성
+     * </pre>
+     *
+     * @param query
+     *            조회 요청쿼리
+     * @param entity
+     *            결과 데이타 타입
+     * @param required
+     *            필수 여부
+     * @param columns
+     *            요청쿼리 처리 결과에서 필요한 컬럼이름.
+     *            <li><b><code>entity</code></b> 모델의 메소드에 적용된 {@link ColumnDef#name()} 값들.
+     * @return 쿼리 처리결과
+     *         <ul>
+     *         <li>&lt;T&gt; 요청받을 데이타 타입
+     *         </ul>
+     *
+     * @since 2019. 3. 28.
+     * @version 0.1.0
+     * @author Park_Jun_Hong_(fafanmama_at_naver_com)
+     */
+    public <T> Result<T> getObject(String query, Class<T> entity, String... columns) {
+        return getObject(query, null, entity, false, columns);
+    }
+
+    /**
+     * 데이터 1개 요청쿼리를 처리한다. <br>
+     * 
+     * <pre>
+     * [개정이력]
+     *      날짜    	| 작성자	|	내용
+     * ------------------------------------------
+     * 2019. 3. 28.		박준홍			최초 작성
+     * </pre>
+     *
+     * @param query
+     *            조회 요청쿼리
+     * @param setter
+     *            요청쿼리 파라미터 설정 객체
+     * @param entity
+     *            결과 데이타 타입
+     * @param required
+     *            필수 여부
+     * @param columns
+     *            요청쿼리 처리 결과에서 필요한 컬럼이름.
+     *            <li><b><code>entity</code></b> 모델의 메소드에 적용된 {@link ColumnDef#name()} 값들.
+     * @return 쿼리 처리결과
+     *         <ul>
+     *         <li>&lt;T&gt; 요청받을 데이타 타입
+     *         </ul>
+     *
+     * @since 2019. 3. 28.
+     * @version 0.1.0
+     * @author Park_Jun_Hong_(fafanmama_at_naver_com)
+     */
+    public <T> Result<T> getObject(String query, SQLConsumer<PreparedStatement> setter, Class<T> entity, boolean required, String... columns) {
+        Result<T> result = new Result<>();
+
+        try {
+            List<T> list = executeQuery(new DefaultConCallbackBroker2(query, setter), entity, columns);
+
+            switch (list.size()) {
+                case 0:
+                    if (required) {
+                        throw new EmptyResultDataAccessException(1);
+                    }
+                    result.andTrue();
+                    break;
+                case 1:
+                    result.setData(list.get(0));
+                    break;
+                default:
+                    throw new IncorrectResultSizeDataAccessException(1, list.size());
+            }
+        } catch (SQLException e) {
+            result.setMessage(e.getMessage());
+        }
+
+        return result;
+    }
+
+    /**
+     * 데이터 1개 요청쿼리를 처리한다. <br>
+     * 
+     * <pre>
+     * [개정이력]
+     *      날짜    	| 작성자	|	내용
+     * ------------------------------------------
+     * 2019. 3. 28.		박준홍			최초 작성
+     * </pre>
+     *
+     * @param query
+     *            조회 요청쿼리
+     * @param setter
+     *            요청쿼리 파라미터 설정 객체
+     * @param entity
+     *            결과 데이타 타입.
+     * @param columns
+     *            요청쿼리 처리 결과에서 필요한 컬럼이름.
+     *            <li><b><code>entity</code></b> 모델의 메소드에 적용된 {@link ColumnDef#name()} 값들.
+     * @return 쿼리 처리결과
+     *         <ul>
+     *         <li>&lt;T&gt; 요청받을 데이타 타입
+     *         </ul>
+     *
+     * @since 2019. 3. 28.
+     * @version 0.1.0
+     * @author Park_Jun_Hong_(fafanmama_at_naver_com)
+     */
+    public <T> Result<T> getObject(String query, SQLConsumer<PreparedStatement> setter, Class<T> entity, String... columns) {
+        return getObject(query, setter, entity, false, columns);
     }
 
     /**
