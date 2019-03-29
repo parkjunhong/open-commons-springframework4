@@ -78,6 +78,50 @@ import open.commons.utils.SQLUtils;
  * 
  * Springframework {@link JdbcTemplate}에서 사용하는 저레벨 수준의 코드를 이용하여 customize 하였음.
  * 
+ * <hr>
+ * {@link SQLConsumer}를 이용한 파라미터 설정 객체 생성 예제 <br>
+ * 
+ * <pre>
+ * static final Function<QueryParamObj, SQLConsumer<PreparedStatement>> PROVIDER = param -> pstmt -> {
+ *     pstmt.setString(1, param.getName());
+ *     pstmt.setString(1, param.getCost());
+ *     pstmt.setString(1, param.getDate());
+ * };
+ * 
+ * static SQLConsumer<PreparedStatement> create(QueryParamObj param) {
+ *     return pstmt -> {
+ *         pstmt.setString(1, param.getName());
+ *         pstmt.setString(1, param.getCost());
+ *         pstmt.setString(1, param.getDate());
+ *     };
+ * }
+ * 
+ * public static void main(String[] args) {
+ *     // 쿼리 파라미터.
+ *     QueryParamObj param = new QueryObj();
+ * 
+ *     // #1. java.util.function.Function 을 이용하는 법
+ *     SQLConsumer<PreparedStatement> setter = PROVIDER.apply(param);
+ *     // #2. 메소드를 이용하는 법
+ *     setter = create(param);
+ * 
+ *     AbstractGenericDao dao = null; // ...
+ * 
+ *     // insert/update/delete
+ *     String query = "INSERT ...";
+ *     Result<Integer> executeUpdate = dao.executeUpdate(query, setter);
+ * 
+ *     // select
+ *     query = "SELECT ...";
+ *     Result<List<QueryObj>> getList = dao.getList(query, setter, QueryObj.class);
+ * 
+ *     // select
+ *     query = "SELECT ...";
+ *     Result<QueryObj> getObject = dao.getObject(query, setter, QueryObj.class);
+ * }
+ * </pre>
+ * </pre>
+ * 
  * @since 2019. 3. 28.
  * @version 0.1.0
  * @author Park_Jun_Hong_(fafanmama_at_naver_com)
@@ -609,7 +653,7 @@ public abstract class AbstractGenericDao implements IGenericDao {
      * @param query
      *            데이터 조회 요청쿼리
      * @param setter
-     *            요청쿼리 파라미터 설정 객체
+     *            요청쿼리 파라미터 설정 객체 <br>
      * @param entity
      *            결과 데이타 타입
      * @columns 요청쿼리 처리 결과에서 필요한 컬럼이름.
