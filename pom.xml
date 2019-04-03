@@ -48,7 +48,7 @@
 
 	<repositories>
 		<!-- >>> YMTECH Maven Repository -->
-		<repository>
+		<!-- repository>
 			<id>central</id>
 			<name>YMTECH Maven Repository</name>
 			<url>http://maven.ymtech.co.kr/nexus/content/groups/public/</url>
@@ -59,21 +59,36 @@
 			<snapshots>
 				<enabled>true</enabled>
 			</snapshots>
-		</repository>
-
+		</repository -->
 		<!-- >>> Maven Central -->
-		<repository>
+		<!-- repository>
 			<id>maven repo1</id>
 			<name>Maven Central Repository</name>
 			<url>http://repo1.maven.org/maven2</url>
+		</repository -->
+		
+		<!-- ===== -->
+		<repository>
+			<id>central</id>
+			<name>Central Repository</name>
+			<url>http://repo.maven.apache.org/maven2</url>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
 		</repository>
+		<repository>
+			<id>ymtech.kr</id>
+			<name>YMTECH Maven Repository</name>
+			<url>http://maven.ymtech.co.kr/nexus/content/groups/public/</url>
+			<layout>default</layout>
+		</repository>		
 	</repositories>
 
 	<pluginRepositories>
 		<!-- >>> Maven Central -->
 		<pluginRepository>
-			<id>maven-repo1</id>
-			<name>Maven Central Repository</name>
+			<id>central</id>
+			<name>Central Repository</name>
 			<url>http://repo1.maven.org/maven2</url>
 		</pluginRepository>
 	</pluginRepositories>
