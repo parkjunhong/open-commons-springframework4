@@ -50,6 +50,7 @@
 		<!-- >>> YMTECH Maven Repository -->
 		<repository>
 			<id>central</id>
+			<name>YMTECH Maven Repository</name>
 			<url>http://maven.ymtech.co.kr/nexus/content/groups/public/</url>
 			<!--
 			<layout>default</layout>
