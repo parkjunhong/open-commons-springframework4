@@ -51,6 +51,7 @@
 		<repository>
 			<id>central</id>
 			<url>http://maven.ymtech.co.kr/nexus/content/groups/public/</url>
+			<!--
 			<layout>default</layout>
 			<releases>
 				<enabled>true</enabled>
@@ -58,6 +59,7 @@
 			<snapshots>
 				<enabled>true</enabled>
 			</snapshots>
+			-->
 		</repository>
 
 		<!-- >>> Maven Central -->
