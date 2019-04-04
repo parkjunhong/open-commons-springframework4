@@ -4,7 +4,14 @@ jdk:
   - oraclejdk8
 
 script:
-  mvn clean package -skipTests=true -Dmaven.javadoc.skip=true -B -V
+  mvn clean package -DskipTests=true -Dmaven.javadoc.skip=true -B -V
 
 deploy:
+  provider: releases
+  api_key: "${GITHUB_OAUTH_TOKEN}"
+  file: "open-commons-springframework4.jar"
   skip_cleanup: true
+  draft: true
+  on:
+    tags: true
+  overwrite: true
