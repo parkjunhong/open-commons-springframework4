@@ -4,4 +4,7 @@ jdk:
   - oraclejdk8
 
 script:
-  mvn clean package -Dmaven.javadoc.skip=true -B -V
+  mvn clean package -skipTests=true -Dmaven.javadoc.skip=true -B -V
+
+deploy:
+  skip_cleanup: true
