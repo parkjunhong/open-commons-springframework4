@@ -48,25 +48,11 @@
 
 	<repositories>
 		<!-- >>> YMTECH Maven Repository -->
-		<!-- repository>
-			<id>central</id>
-			<name>YMTECH Maven Repository</name>
-			<url>http://maven.ymtech.co.kr/nexus/content/groups/public/</url>
-			<layout>default</layout>
-			<releases>
-				<enabled>true</enabled>
-			</releases>
-			<snapshots>
-				<enabled>true</enabled>
-			</snapshots>
-		</repository -->
+		<!-- repository> <id>central</id> <name>YMTECH Maven Repository</name> <url>http://maven.ymtech.co.kr/nexus/content/groups/public/</url> <layout>default</layout> 
+			<releases> <enabled>true</enabled> </releases> <snapshots> <enabled>true</enabled> </snapshots> </repository -->
 		<!-- >>> Maven Central -->
-		<!-- repository>
-			<id>maven repo1</id>
-			<name>Maven Central Repository</name>
-			<url>http://repo1.maven.org/maven2</url>
-		</repository -->
-		
+		<!-- repository> <id>maven repo1</id> <name>Maven Central Repository</name> <url>http://repo1.maven.org/maven2</url> </repository -->
+
 		<!-- ===== -->
 		<repository>
 			<id>central</id>
@@ -81,7 +67,7 @@
 			<name>YMTECH Maven Repository</name>
 			<url>http://maven.ymtech.co.kr/nexus/content/groups/public/</url>
 			<layout>default</layout>
-		</repository>		
+		</repository>
 	</repositories>
 
 	<pluginRepositories>
@@ -181,6 +167,23 @@
 			<version>${open-commons-core.version}</version>
 		</dependency>
 		<!-- <<< end: open-commons -->
+
+		<!-- >>> begin: junit -->
+		<!-- https://mvnrepository.com/artifact/junit/junit -->
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.12</version>
+			<scope>test</scope>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.hamcrest/hamcrest-core -->
+		<dependency>
+			<groupId>org.hamcrest</groupId>
+			<artifactId>hamcrest-core</artifactId>
+			<version>2.1</version>
+			<scope>test</scope>
+		</dependency>
+		<!-- <<< end: junit -->
 
 	</dependencies>
 

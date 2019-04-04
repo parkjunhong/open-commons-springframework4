@@ -26,7 +26,7 @@
  *
  * This file is generated under this project, "open-commons-springframework4".
  *
- * Date  : 2019. 3. 29. 오후 3:07:14
+ * Date  : 2019. 4. 4. 오후 12:33:49
  *
  * Author: Park_Jun_Hong_(fafanmama_at_naver_com)
  * 
@@ -46,17 +46,22 @@ import dao.example.TestDao;
 
 /**
  * 
- * @since 2019. 3. 29.
+ * @since 2019. 4. 4.
  * @author Park_Jun_Hong_(fafanmama_at_naver_com)
  * @version _._._
  */
-public class ExampleSQLConsumer {
+public class ExampleSQLConsumer2 {
 
     static final Function<QueryParamObj, SQLConsumer<PreparedStatement>> PROVIDER = param -> pstmt -> {
         pstmt.setString(1, param.getName());
         pstmt.setString(1, param.getCost());
         pstmt.setString(1, param.getDate());
     };
+
+    @Test
+    public void ok() {
+        System.out.println("OK");
+    }
 
     @Test
     public void testRun() {

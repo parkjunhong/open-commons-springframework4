@@ -48,7 +48,6 @@ import open.commons.springframework4.dao.AbstractGenericDao;
  * @version _._._
  */
 public class TestDao extends AbstractGenericDao {
-
     /**
      * <br>
      * 
