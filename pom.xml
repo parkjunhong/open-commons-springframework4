@@ -8,8 +8,11 @@
 
 	<properties>
 		<encoding>UTF-8</encoding>
-
 		<java-version>1.8</java-version>
+		
+		<compile.encoding-version>UTF-8</compile.encoding-version>
+		<compile.source-version>1.8</compile.source-version>
+		<compile.target-version>1.8</compile.target-version>
 
 		<!-- >>> begin: dependencies -->
 		<org.springframework-version>4.3.22.RELEASE</org.springframework-version>
@@ -21,16 +24,16 @@
 		<open-commons-core.version>1.6.5</open-commons-core.version>
 		<!-- <<< end: dependencies -->
 
-		<!-- >>> begin: build -->
+		<!-- >>> begin: plugin dependencies -->
 		<build.finalName>open-commons-spring4</build.finalName>
-
-		<maven-eclipse-plugin.version>2.9</maven-eclipse-plugin.version>
+		
+		<maven-eclipse-plugin.version>2.9</maven-eclipse-plugin.version>		
 		<maven-compiler-plugin.version>3.7.0</maven-compiler-plugin.version>
 		<maven-source-plugin.version>2.2.1</maven-source-plugin.version>
 		<maven-resources-plugin.version>3.0.1</maven-resources-plugin.version>
 		<maven-javadoc-plugin.version>3.0.1</maven-javadoc-plugin.version>
 		<maven-assembly-plugin.version>3.0.0</maven-assembly-plugin.version>
-		<!-- <<< end: build -->
+		<!-- >>> end: plugin dependencies -->
 	</properties>
 
 	<distributionManagement>
@@ -201,7 +204,7 @@
 			<resource>
 				<directory>${project.basedir}</directory>
 				<includes>
-					<include>LICENSE.txt</include>
+					<include>LICENSE</include>
 				</includes>
 				<targetPath>META-INF</targetPath>
 			</resource>
@@ -213,9 +216,9 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>${maven-compiler-plugin.version}</version>
 				<configuration>
-					<encoding>UTF-8</encoding>
-					<source>1.8</source>
-					<target>1.8</target>
+					<encoding>${compile.encoding-version}</encoding>
+					<source>${compile.source-version}</source>
+					<target>${compile.target-version}</target>
 				</configuration>
 			</plugin>
 			<!-- <<< end: compile -->
