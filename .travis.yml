@@ -9,7 +9,7 @@ script:
 deploy:
   provider: releases
   api_key: "${GITHUB_OAUTH_TOKEN}"
-  file: "open-commons-springf4.jar"
+  file: "target/open-commons-spring4.jar"
   skip_cleanup: true
 #  draft: true
 #  on:
