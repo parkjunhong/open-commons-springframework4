@@ -6,11 +6,11 @@ jdk:
 script:
   mvn clean package -DskipTests=true -Dmaven.javadoc.skip=true -B -V
 
-#deploy:
-#  provider: releases
-#  api_key: "${GITHUB_OAUTH_TOKEN}"
-#  file: "open-commons-springframework4.jar"
-#  skip_cleanup: true
+deploy:
+  provider: releases
+  api_key: "${GITHUB_OAUTH_TOKEN}"
+  file: "open-commons-springf4.jar"
+  skip_cleanup: true
 #  draft: true
 #  on:
 #    tags: true
