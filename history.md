@@ -1,4 +1,3 @@
-### commit 발생
 ```
-일반적인 업데이트인 경우
+commit testing...
 ```
