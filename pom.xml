@@ -70,7 +70,8 @@
 		<repository>
 			<id>ymtech.kr</id>
 			<name>YMTECH Maven Repository</name>
-			<url>http://maven.ymtech.co.kr/nexus/content/groups/public/</url>
+			<!-- url>http://maven.ymtech.co.kr/nexus/content/groups/public/</url -->
+			<url>http://nexus3.ymtech.co.kr/repository/maven-public/</url>
 			<layout>default</layout>
 		</repository>
 	</repositories>
