@@ -12,6 +12,6 @@ deploy:
   file: "target/open-commons-spring4.jar"
   skip_cleanup: true
 #  draft: true
-#  on:
-#    tags: true
+  on:
+    tags: true
   overwrite: true
