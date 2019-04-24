@@ -18,7 +18,6 @@ deploy:
   provider: releases
   tag_name: $TRAVIS_TAG
   api_key: "${GITHUB_OAUTH_TOKEN}"
-  file_glob: true
   file: "target/open-commons-spring4.jar"
   skip_cleanup: true
 #  draft: true
