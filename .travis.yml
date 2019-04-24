@@ -9,6 +9,7 @@ script:
 before_deploy:
 - git config --local user.name "$USER_NAME"
 - git config --local user.email "$USER_EMAIL"
+- export TRAVIS_TAG=$GIT_TAG
 - export TRAVIS_TAG=${TRAVIS_TAG:-$(date +'%Y%m%d%H%M%S')-$(git log --format=%h -1)}
 - git tag "$TRAVIS_TAG"
 
@@ -18,7 +19,6 @@ deploy:
   target_commitish: $TRAVIS_COMMIT
   name: $TRAVIS_TAG
   api_key: "${GITHUB_OAUTH_TOKEN}"
-  file_glob: true
   file: "target/open-commons-spring4.jar"
   skip_cleanup: true
 #  draft: true
