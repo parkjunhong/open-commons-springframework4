@@ -11,13 +11,15 @@ before_deploy:
 - git config --local user.name "parkjunhong"
 - git config --local user.email "parkjunhong77@gmail.com"
 - export TRAVIS_TAG=${TRAVIS_TAG:-$(date +'%Y%m%d%H%M%S')-$(git log --format=%h -1)}
-#- git tag $TRAVIS_TAG
+#- git tag $TRAVIS_TAG # 이 설정으로 인해 'tag 중복에러'가 발생한다.
 
 deploy:
   provider: releases
   tag_name: $TRAVIS_TAG
   api_key: "${GITHUB_OAUTH_TOKEN}"
-  file: "target/open-commons-spring4.jar"
+  file: 
+    - "target/open-commons-spring4.jar"
+    - "target/open-commons-spring4-sources.jar"
   skip_cleanup: true
 #  draft: true
   on:
