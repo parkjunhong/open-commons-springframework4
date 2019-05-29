@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>open.commons</groupId>
 	<artifactId>open-commons-springframework4</artifactId>
-	<version>0.1.1</version>
+	<version>0.1.1.1</version>
 	<name>Open Commons for springframework 4</name>
 
 	<properties>
@@ -18,7 +18,7 @@
 		<org.springframework-version>4.3.22.RELEASE</org.springframework-version>
 		<org.springframework.security-version>4.2.12.RELEASE</org.springframework.security-version>
 		<org.apache.logging.log4j-version>2.1</org.apache.logging.log4j-version>
-		<jackson-databind.version>2.8.11.3</jackson-databind.version>
+		<jackson-databind.version>2.9.9</jackson-databind.version>
 		<commons-io.version>2.5</commons-io.version>
 
 		<open-commons-core.version>1.6.5</open-commons-core.version>
@@ -41,23 +41,15 @@
 			<id>releases</id>
 			<name>Release Repository</name>
 			<url>http://nexus3.ymtech.co.kr/repository/maven-releases/</url>
-<!-- 			<url>http://maven.ymtech.co.kr/nexus/content/repositories/releases/</url> -->
 		</repository>
 		<snapshotRepository>
 			<id>snapshots</id>
 			<name>Snapshot Repository</name>
 			<url>http://nexus3.ymtech.co.kr/repository/maven-snapshots/</url>
-<!-- 			<url>http://maven.ymtech.co.kr/nexus/content/repositories/snapshots/</url> -->
 		</snapshotRepository>
 	</distributionManagement>
 
 	<repositories>
-		<!-- >>> YMTECH Maven Repository -->
-		<!-- repository> <id>central</id> <name>YMTECH Maven Repository</name> <url>http://maven.ymtech.co.kr/nexus/content/groups/public/</url> <layout>default</layout> 
-			<releases> <enabled>true</enabled> </releases> <snapshots> <enabled>true</enabled> </snapshots> </repository -->
-		<!-- >>> Maven Central -->
-		<!-- repository> <id>maven repo1</id> <name>Maven Central Repository</name> <url>http://repo1.maven.org/maven2</url> </repository -->
-
 		<!-- ===== -->
 		<repository>
 			<id>central</id>
@@ -70,7 +62,6 @@
 		<repository>
 			<id>ymtech.kr</id>
 			<name>YMTECH Maven Repository</name>
-			<!-- url>http://maven.ymtech.co.kr/nexus/content/groups/public/</url -->
 			<url>http://nexus3.ymtech.co.kr/repository/maven-public/</url>
 			<layout>default</layout>
 		</repository>
@@ -263,7 +254,10 @@
 			<!-- <<< end: javadoc -->
 		</plugins>
 	</build>
-	<description>[2019/04/03]
+	<description>[2019/05/29]
+- Release: 0.1.1.1
+ + github Vulunerability: CVE-2019-12086 
+[2019/04/03]
 - Release: 0.1.1
 
 [2019/03/29]
