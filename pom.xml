@@ -17,7 +17,7 @@
 		<!-- >>> begin: dependencies -->
 		<org.springframework-version>4.3.22.RELEASE</org.springframework-version>
 		<org.springframework.security-version>4.2.12.RELEASE</org.springframework.security-version>
-		<org.apache.logging.log4j-version>2.1</org.apache.logging.log4j-version>
+		<org.apache.logging.log4j-version>2.13.3</org.apache.logging.log4j-version>
 		<jackson-databind.version>2.9.9</jackson-databind.version>
 		<commons-io.version>2.5</commons-io.version>
 
