@@ -15,7 +15,7 @@
 		<compile.target-version>1.8</compile.target-version>
 
 		<!-- >>> begin: dependencies -->
-		<org.springframework-version>4.3.22.RELEASE</org.springframework-version>
+		<org.springframework-version>5.3.18</org.springframework-version>
 		<org.springframework.security-version>4.2.12.RELEASE</org.springframework.security-version>
 		<org.apache.logging.log4j-version>2.1</org.apache.logging.log4j-version>
 		<jackson-databind.version>2.9.10.7</jackson-databind.version>
